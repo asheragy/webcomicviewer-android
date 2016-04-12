@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.v4.widget.SwipeRefreshLayout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipeRefreshLayout"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/list"
+        android:name="org.cerion.webcomicviewer.MainListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        app:layoutManager="LinearLayoutManager"
+        tools:context=".ComicListFragment"
+        tools:listitem="@layout/main_list_item" />
+
+</android.support.v4.widget.SwipeRefreshLayout>
