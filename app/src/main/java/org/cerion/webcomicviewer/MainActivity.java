@@ -10,7 +10,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
+        Database db = Database.getInstance(this);
+        //db.reset();
+        db.log();
+        db.loadCachedFeeds();
         //TODO, check internet failure case
+
 
         //Prefs.clearLastUpdates(this);
     }

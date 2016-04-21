@@ -12,7 +12,7 @@ import com.einmalfel.earl.Feed;
 import com.einmalfel.earl.Item;
 
 
-import org.cerion.webcomicviewer.Prefs;
+import org.cerion.webcomicviewer.Database;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -22,7 +22,6 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 import java.util.zip.DataFormatException;
 
 public class Comic {
@@ -35,62 +34,79 @@ public class Comic {
 
     //Dynamic content
     private String mTitle;
-    private List<Item> mItems;
+    private Date mLastUpdated;
     private Date mLastVisited;
+    private int mCount;
+    private String mUrl;
+
 
     public Comic(String feed) {
         mFeedUrl = feed;
     }
 
-    public String getmTitle() {
-        return mTitle;
-    }
-
-    public String getUrl() {
-        if(mItems != null && mItems.size() > 0)
-            return mItems.get(0).getLink();
-
-        return null;
-    }
-
-    public String getRSS() {
+    public String getFeedUrl() {
         return mFeedUrl;
     }
 
-    public String getUpdated() {
-        if(mItems != null && mItems.size() > 0) {
-            if(mItems.get(0).getPublicationDate() != null)
-                return mFormat.format(mItems.get(0).getPublicationDate());
-        }
-        return "...";
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public void setTitle(String title) {
+        mTitle = title;
+    }
+
+    public String getUrl() {
+        return mUrl;
+    }
+
+    public void setUrl(String url) {
+        mUrl = url;
     }
 
     public int getUpdatedCount() {
-
-        if(mItems == null) {
-            Log.d(TAG,"getUpdatedCount() null items");
-            return 0;
-        }
-
-        if(mLastVisited == null) {
-            Log.d(TAG,"getUpdatedCount() null last visit");
-            return mItems.size();
-        }
-
-        int count = 0;
-        for(Item item : mItems) {
-            if(item.getPublicationDate() == null)
-                Log.d(TAG,"null date on " + mTitle);
-            else if(item.getPublicationDate().getTime() > mLastVisited.getTime())
-                count++;
-        }
-
-        return count;
+        return mCount;
     }
 
+    public void setUpdatedCount(int count) {
+        mCount = count;
+    }
+
+    public Date getLastUpdated() {
+        return mLastUpdated;
+    }
+
+    //TODO move this to where its used
+    public String getUpdated() {
+        if(mLastUpdated != null)
+            return mFormat.format(mLastUpdated);
+
+        return "...";
+    }
+
+    public void setLastUpdated(Date updated) {
+        mLastUpdated = updated;
+    }
+
+
+    //------------
+
     public void setVisited(Context context) {
-        Prefs.updateLastVisit(context,getRSS());
         mLastVisited = new Date();
+
+        mCount = 0; //reset since all updates will be as of right now
+
+        Database db = Database.getInstance(context);
+        //db.setLastVisited(this);
+        db.save(this);
+    }
+
+    public void setLastVisited(Date date) {
+        mLastVisited = date;
+    }
+
+    public Date getLastVisited() {
+        return mLastVisited;
     }
 
     public void openWebView(Context context) {
@@ -100,29 +116,6 @@ public class Comic {
             context.startActivity(i);
         } else
             Toast.makeText(context, "Unable to find page", Toast.LENGTH_SHORT).show();
-    }
-
-
-    public void updateFromRSSFeed(Context context) {
-
-        Log.d(TAG,"Updating " + getRSS());
-        InputStream inputStream;
-        Feed feed = null;
-
-        try {
-            inputStream = new URL(getRSS()).openConnection().getInputStream();
-            feed = EarlParser.parseOrThrow(inputStream, 0);
-            Log.i(TAG, "Processing feed: '" + feed.getTitle() + "' " + feed.getItems().size() + " items");
-        } catch (IOException|XmlPullParserException|DataFormatException e) {
-            e.printStackTrace();
-        }
-
-        if(feed != null) {
-            this.mTitle = feed.getTitle();
-            this.mLastVisited = Prefs.getLastVisit(context, mFeedUrl);
-            this.mItems = (List<Item>) feed.getItems();
-        } else
-            Log.e(TAG,"failed to get feed");
     }
 
 

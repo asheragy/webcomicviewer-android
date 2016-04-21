@@ -31,8 +31,8 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         Comic comic = mData.get(position);
-        holder.mId.setText(comic.getmTitle() == null ? "" : comic.getmTitle());
-        holder.mContent.setText(comic.getRSS());
+        holder.mId.setText(comic.getTitle() == null ? "" : comic.getTitle());
+        holder.mContent.setText(comic.getFeedUrl());
         holder.mUpdated.setText(comic.getUpdated());
         holder.mCount.setText(comic.getUpdatedCount() + " updates");
     }
@@ -65,7 +65,7 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
         public void onClick(View v) {
             Comic comic = mData.get(getLayoutPosition());
 
-            Log.d(TAG, "open " + comic.getmTitle());
+            Log.d(TAG, "open " + comic.getTitle());
             comic.setVisited(v.getContext());
             notifyItemChanged(getLayoutPosition());
 
