@@ -3,6 +3,7 @@ package org.cerion.webcomicviewer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -12,7 +13,7 @@ public class MainActivity extends AppCompatActivity {
 
         Database db = Database.getInstance(this);
         //db.reset();
-        db.log();
+        //db.log();
         db.loadCachedFeeds();
         //TODO, check internet failure case
 

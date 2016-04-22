@@ -77,11 +77,11 @@ public class Database extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
 
         values.put(_FEED_URL, comic.getFeedUrl());
-        values.put(_TITLE, comic.getTitle());
+        values.put(_TITLE, comic.title);
         values.put(_UPDATED, comic.getLastUpdated().getTime());
         values.put(_COUNT, comic.getUpdatedCount());
         values.put(_URL, comic.getUrl());
-        values.put(_VISITED, comic.getLastVisited().getTime());
+        values.put(_VISITED, (comic.getLastVisited() == null ? 0 : comic.getLastVisited().getTime()) );
 
         Log.d(TAG,"saving " + comic.getFeedUrl() + " with " + values.toString());
 
@@ -136,7 +136,7 @@ public class Database extends SQLiteOpenHelper {
 
             if(c != null) {
                 if (c.moveToFirst()) {
-                    feed.setTitle(c.getString(0));
+                    feed.title = c.getString(0);
                     feed.setUrl(c.getString(1));
                     feed.setLastUpdated(new Date(c.getLong(2)));
                     feed.setUpdatedCount(c.getInt(3));

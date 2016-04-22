@@ -10,12 +10,16 @@ import android.widget.TextView;
 
 import org.cerion.webcomicviewer.comics.Comic;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.ViewHolder> {
 
     private static final String TAG = ComicListAdapter.class.getSimpleName();
     private final List<Comic> mData;
+    private static final DateFormat mFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.US);
 
     public ComicListAdapter(List<Comic> data) {
         mData = data;
@@ -31,10 +35,21 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         Comic comic = mData.get(position);
-        holder.mId.setText(comic.getTitle() == null ? "" : comic.getTitle());
+        holder.mId.setText(comic.title == null ? "" : comic.title);
         holder.mContent.setText(comic.getFeedUrl());
-        holder.mUpdated.setText(comic.getUpdated());
-        holder.mCount.setText(comic.getUpdatedCount() + " updates");
+        holder.mUpdated.setText( formatDate(comic.getLastUpdated()) );
+
+        if(comic.getUpdatedCount() > 0)
+            holder.mCount.setText(comic.getUpdatedCount() + " updates");
+        else
+            holder.mCount.setText("");
+    }
+
+    private String formatDate(Date date) {
+        if(date != null)
+            return mFormat.format(date);
+
+        return "...";
     }
 
 
@@ -65,7 +80,7 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
         public void onClick(View v) {
             Comic comic = mData.get(getLayoutPosition());
 
-            Log.d(TAG, "open " + comic.getTitle());
+            Log.d(TAG, "open " + comic.title);
             comic.setVisited(v.getContext());
             notifyItemChanged(getLayoutPosition());
 

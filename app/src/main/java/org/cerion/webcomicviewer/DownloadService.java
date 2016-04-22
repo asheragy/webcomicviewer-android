@@ -48,21 +48,6 @@ public class DownloadService extends IntentService {
         context.startService(intent);
     }
 
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, DownloadService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG,"onHandleIntent");
@@ -82,7 +67,6 @@ public class DownloadService extends IntentService {
         }
     }
 
-
     @Override
     public void onDestroy() {
         mResultReceiver.send(0,null);
@@ -91,8 +75,10 @@ public class DownloadService extends IntentService {
 
     private void handleActionUpdateFeeds() {
 
+        Date start = new Date();
         Database db = Database.getInstance(this);
 
+        //TODO, make this multithreaded
         for(Comic comic : Feeds.LIST) {
             //Date lastVisited = db.getLastVisited(comic); //TODO, this should already be set in memory and unnecessary
             //if(lastVisited != null)
@@ -102,6 +88,10 @@ public class DownloadService extends IntentService {
 
             db.save(comic);
         }
+
+        Date end = new Date();
+        long diff = end.getTime() - start.getTime();
+        Log.d(TAG,diff + "ms");
 
         Intent intent = new Intent();
         intent.setAction(UpdateBroadcastReceiver.UPDATE_ACTION);
@@ -124,7 +114,7 @@ public class DownloadService extends IntentService {
 
         int count = 0;
         if(feed != null) {
-            comic.setTitle( feed.getTitle() );
+            comic.title = feed.getTitle();
             List<Item> items = (List<Item>) feed.getItems();
 
             //Set fields based on items

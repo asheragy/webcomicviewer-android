@@ -4,36 +4,22 @@ package org.cerion.webcomicviewer.comics;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.einmalfel.earl.EarlParser;
-import com.einmalfel.earl.Feed;
-import com.einmalfel.earl.Item;
-
-
 import org.cerion.webcomicviewer.Database;
-import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.zip.DataFormatException;
+
 
 public class Comic {
 
     private static final String TAG = Comic.class.getSimpleName();
-    private static final DateFormat mFormat = DateFormat.getDateInstance(DateFormat.SHORT,Locale.US);
 
     //Static content
     private final String mFeedUrl;
 
     //Dynamic content
-    private String mTitle;
+    public String title;
     private Date mLastUpdated;
     private Date mLastVisited;
     private int mCount;
@@ -46,14 +32,6 @@ public class Comic {
 
     public String getFeedUrl() {
         return mFeedUrl;
-    }
-
-    public String getTitle() {
-        return mTitle;
-    }
-
-    public void setTitle(String title) {
-        mTitle = title;
     }
 
     public String getUrl() {
@@ -76,18 +54,17 @@ public class Comic {
         return mLastUpdated;
     }
 
-    //TODO move this to where its used
-    public String getUpdated() {
-        if(mLastUpdated != null)
-            return mFormat.format(mLastUpdated);
-
-        return "...";
-    }
-
     public void setLastUpdated(Date updated) {
         mLastUpdated = updated;
     }
 
+    public void setLastVisited(Date date) {
+        mLastVisited = date;
+    }
+
+    public Date getLastVisited() {
+        return mLastVisited;
+    }
 
     //------------
 
@@ -101,13 +78,6 @@ public class Comic {
         db.save(this);
     }
 
-    public void setLastVisited(Date date) {
-        mLastVisited = date;
-    }
-
-    public Date getLastVisited() {
-        return mLastVisited;
-    }
 
     public void openWebView(Context context) {
         if(getUrl() != null) {
