@@ -1,10 +1,12 @@
 package org.cerion.webcomicviewer;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,12 +17,16 @@ import android.view.ViewGroup;
 
 import org.cerion.webcomicviewer.comics.Feeds;
 
+import java.util.Date;
+
 
 public class ComicListFragment extends Fragment {
 
     private static final String TAG = ComicListFragment.class.getSimpleName();
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ComicListAdapter mAdapter;
+    private static final String PREF_LAST_UPDATED = "lastUpdated";
+    private static SharedPreferences mPrefs;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -52,6 +58,21 @@ public class ComicListFragment extends Fragment {
             }
         });
 
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        Date lastUpdated = new Date(mPrefs.getLong(PREF_LAST_UPDATED,0));
+
+        //refresh if last update was more than 30 minutes ago
+        if(System.currentTimeMillis() - lastUpdated.getTime() > 1000*60*30) {
+            Log.d(TAG,"running auto update");
+            mSwipeRefreshLayout.post(new Runnable() {
+                @Override public void run() {
+                    mSwipeRefreshLayout.setRefreshing(true);
+                    refreshList();
+                }
+            });
+        }
+
+
         return view;
     }
 
@@ -68,6 +89,8 @@ public class ComicListFragment extends Fragment {
             Log.d(TAG, "onReceive");
             mSwipeRefreshLayout.setRefreshing(false);
             mAdapter.notifyDataSetChanged();
+
+            mPrefs.edit().putLong(PREF_LAST_UPDATED, new Date().getTime()).apply();
         }
     }
 
