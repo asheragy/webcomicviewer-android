@@ -7,11 +7,11 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 import com.einmalfel.earl.EarlParser;
-import com.einmalfel.earl.Feed;
 import com.einmalfel.earl.Item;
 
-import org.cerion.webcomicviewer.comics.Comic;
-import org.cerion.webcomicviewer.comics.Feeds;
+import org.cerion.webcomicviewer.data.Database;
+import org.cerion.webcomicviewer.data.Feed;
+import org.cerion.webcomicviewer.data.Feeds;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -19,22 +19,35 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
 public class DownloadService extends IntentService {
 
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_UPDATE_FEEDS = "org.cerion.webcomicviewer.action.UPDATE_FEEDS";
-    private static final String RESULT_RECEIVER = "resultReceiver";
-    private static final String ACTION_BAZ = "org.cerion.webcomicviewer.action.BAZ";
-
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "org.cerion.webcomicviewer.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "org.cerion.webcomicviewer.extra.PARAM2";
     private static final String TAG = DownloadService.class.getSimpleName();
 
-    ResultReceiver mResultReceiver;
+    private static final String ACTION_UPDATE_FEEDS = "org.cerion.webcomicviewer.action.UPDATE_FEEDS";
+    private static final String RESULT_RECEIVER = "resultReceiver";
+
+    private ResultReceiver mResultReceiver;
+
+    //Thread Pool
+    private static final int KEEP_ALIVE_TIME = 1;
+    private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
+
+    //Mostly for internet requests, can be higher than cpu count
+    private static final int NUMBER_OF_CORES = 5;//Runtime.getRuntime().availableProcessors();
+
+    private final BlockingQueue<Runnable> mWorkQueue = new LinkedBlockingQueue<>();
+    private final ThreadPoolExecutor mThreadPool = new ThreadPoolExecutor(
+            NUMBER_OF_CORES, // Initial pool size
+            NUMBER_OF_CORES, // Max pool size
+            KEEP_ALIVE_TIME,
+            KEEP_ALIVE_TIME_UNIT,
+            mWorkQueue);
 
     public DownloadService() {
         super("DownloadService");
@@ -59,10 +72,6 @@ public class DownloadService extends IntentService {
             final String action = intent.getAction();
             if (ACTION_UPDATE_FEEDS.equals(action)) {
                 handleActionUpdateFeeds();
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
             }
         }
     }
@@ -76,18 +85,36 @@ public class DownloadService extends IntentService {
     private void handleActionUpdateFeeds() {
 
         Date start = new Date();
-        Database db = Database.getInstance(this);
 
-        //TODO, make this multithreaded
-        for(Comic comic : Feeds.LIST) {
-            //Date lastVisited = db.getLastVisited(comic); //TODO, this should already be set in memory and unnecessary
-            //if(lastVisited != null)
-            //    Log.d(TAG,"visited = " + lastVisited.getTime());
-            //comic.setLastVisited(lastVisited); //load this first
-            updateFromRSSFeed(comic);
+        //Multithreaded to speed up internet requests
+        for(final Feed feed : Feeds.LIST) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    updateFromRSSFeed(feed);
+                }
+            };
 
-            db.save(comic);
+            mThreadPool.execute(runnable);
         }
+
+        while (mThreadPool.getTaskCount() != mThreadPool.getCompletedTaskCount()) {
+            Log.d(TAG,"processing...");
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        mThreadPool.shutdown();
+        Log.d(TAG,"Saving feeds");
+
+        //Save data
+        Database db = Database.getInstance(this);
+        for(Feed feed : Feeds.LIST)
+            db.save(feed);
+
 
         Date end = new Date();
         long diff = end.getTime() - start.getTime();
@@ -98,11 +125,11 @@ public class DownloadService extends IntentService {
         sendBroadcast(intent);
     }
 
-    private void updateFromRSSFeed(Comic comic) {
+    private void updateFromRSSFeed(Feed comic) {
 
         Log.d(TAG,"Updating " + comic.getFeedUrl());
         InputStream inputStream;
-        Feed feed = null;
+        com.einmalfel.earl.Feed feed = null;
 
         try {
             inputStream = new URL(comic.getFeedUrl()).openConnection().getInputStream();
@@ -115,33 +142,31 @@ public class DownloadService extends IntentService {
         int count = 0;
         if(feed != null) {
             comic.title = feed.getTitle();
+
+            @SuppressWarnings("unchecked")
             List<Item> items = (List<Item>) feed.getItems();
 
             //Set fields based on items
-            if(items != null) {
+            if (items.size() > 0) {
+                //Url for most recent item
+                comic.url = items.get(0).getLink();
 
-                if (items.size() > 0) {
-                    //Url for most recent item
-                    comic.setUrl( items.get(0).getLink() );
+                //Timestamp of most recent item
+                if(items.get(0).getPublicationDate() != null)
+                    comic.lastUpdated = items.get(0).getPublicationDate();
 
-                    //Timestamp of most recent item
-                    if(items.get(0).getPublicationDate() != null)
-                        comic.setLastUpdated( items.get(0).getPublicationDate() );
-
-                    if(comic.getLastVisited() == null)
-                        count = items.size();
-                    else {
-                        for (Item item : items) {
-                            if (item.getPublicationDate() == null)
-                                Log.e(TAG, "null date");
-                            else if (item.getPublicationDate().getTime() > comic.getLastVisited().getTime())
-                                count++;
-                        }
+                if(comic.lastVisited == null)
+                    count = items.size();
+                else {
+                    for (Item item : items) {
+                        if (item.getPublicationDate() == null)
+                            Log.e(TAG, "null date");
+                        else if (item.getPublicationDate().getTime() > comic.lastVisited.getTime())
+                            count++;
                     }
-
-                    comic.setUpdatedCount(count);
                 }
 
+                comic.updatedCount = count;
             }
 
         } else
@@ -149,12 +174,4 @@ public class DownloadService extends IntentService {
     }
 
 
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
 }

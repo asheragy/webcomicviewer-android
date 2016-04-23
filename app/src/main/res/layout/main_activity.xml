@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <fragment android:name="org.cerion.webcomicviewer.ComicListFragment"
+    <fragment android:name="org.cerion.webcomicviewer.FeedListFragment"
         android:id="@+id/fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

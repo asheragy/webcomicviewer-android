@@ -1,4 +1,4 @@
-package org.cerion.webcomicviewer.comics;
+package org.cerion.webcomicviewer.data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,13 +13,13 @@ public class Feeds {
             "http://www.xkcd.com/rss.xml"
     };
 
-    public static final List<Comic> LIST = getList();
+    public static final List<Feed> LIST = getList();
 
-    private static List<Comic> getList() {
-        List<Comic> result = new ArrayList<>();
+    private static List<Feed> getList() {
+        List<Feed> result = new ArrayList<>();
 
         for(String feed : mRSSFeeds)
-            result.add(new Comic(feed));
+            result.add(new Feed(feed));
 
         return result;
     }

@@ -16,7 +16,7 @@
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
         app:layoutManager="LinearLayoutManager"
-        tools:context=".ComicListFragment"
+        tools:context=".FeedListFragment"
         tools:listitem="@layout/main_list_item" />
 
 </android.support.v4.widget.SwipeRefreshLayout>

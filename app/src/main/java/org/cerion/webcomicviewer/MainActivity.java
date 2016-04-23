@@ -3,6 +3,8 @@ package org.cerion.webcomicviewer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import org.cerion.webcomicviewer.data.Database;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -15,9 +17,7 @@ public class MainActivity extends AppCompatActivity {
         //db.reset();
         //db.log();
         db.loadCachedFeeds();
+
         //TODO, check internet failure case
-
-
-        //Prefs.clearLastUpdates(this);
     }
 }

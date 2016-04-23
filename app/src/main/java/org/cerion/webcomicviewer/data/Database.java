@@ -1,4 +1,4 @@
-package org.cerion.webcomicviewer;
+package org.cerion.webcomicviewer.data;
 
 
 import android.content.ContentValues;
@@ -7,9 +7,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-
-import org.cerion.webcomicviewer.comics.Comic;
-import org.cerion.webcomicviewer.comics.Feeds;
 
 import java.util.Date;
 
@@ -70,59 +67,24 @@ public class Database extends SQLiteOpenHelper {
 
     /**
      * Add or update existing feed
-     * @param comic
+     * @param feed to save
      */
-    public void save(Comic comic) {
+    public void save(Feed feed) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
-        values.put(_FEED_URL, comic.getFeedUrl());
-        values.put(_TITLE, comic.title);
-        values.put(_UPDATED, comic.getLastUpdated().getTime());
-        values.put(_COUNT, comic.getUpdatedCount());
-        values.put(_URL, comic.getUrl());
-        values.put(_VISITED, (comic.getLastVisited() == null ? 0 : comic.getLastVisited().getTime()) );
+        values.put(_FEED_URL, feed.getFeedUrl());
+        values.put(_TITLE, feed.title);
+        values.put(_UPDATED, feed.lastUpdated.getTime());
+        values.put(_COUNT, feed.updatedCount);
+        values.put(_URL, feed.url);
+        values.put(_VISITED, (feed.lastVisited == null ? 0 : feed.lastVisited.getTime()) );
 
-        Log.d(TAG,"saving " + comic.getFeedUrl() + " with " + values.toString());
+        Log.d(TAG,"saving " + feed.getFeedUrl() + " with " + values.toString());
 
         db.insertWithOnConflict(TABLE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         db.close();
     }
-
-    /*
-    public void setVisited(Comic comic) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
-        String where = String.format("%s='%s'", _FEED_URL, comic.getFeedUrl());
-        values.put(_VISITED, new Date().getTime());
-        values.put(_COUNT, 0);
-
-        //Log.d(TAG,"values = " + values.toString());
-        db.update(TABLE,values,where,null);
-        db.close();
-    }
-    */
-
-    /*
-    public Date getLastVisited(Comic comic) {
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        Date result = null;
-        String query = String.format("SELECT %s FROM %s WHERE %s='%s'",_VISITED, TABLE, _FEED_URL, comic.getFeedUrl());
-        Cursor c = db.rawQuery(query, null);
-
-        if(c != null) {
-            if (c.moveToFirst()) {
-                result = new Date(c.getLong(0));
-            }
-            c.close();
-        }
-
-        db.close();
-        return result;
-    }
-    */
 
     public void loadCachedFeeds() {
 
@@ -130,17 +92,17 @@ public class Database extends SQLiteOpenHelper {
 
         String[] columns = { _TITLE, _URL, _UPDATED, _COUNT, _VISITED };
 
-        for(Comic feed : Feeds.LIST) {
+        for(Feed feed : Feeds.LIST) {
             String selection = String.format("%s='%s'", _FEED_URL, feed.getFeedUrl());
             Cursor c = db.query(TABLE, columns,selection,null,null,null,null);
 
             if(c != null) {
                 if (c.moveToFirst()) {
                     feed.title = c.getString(0);
-                    feed.setUrl(c.getString(1));
-                    feed.setLastUpdated(new Date(c.getLong(2)));
-                    feed.setUpdatedCount(c.getInt(3));
-                    feed.setLastVisited(new Date(c.getLong(4)));
+                    feed.url = c.getString(1);
+                    feed.lastUpdated = new Date(c.getLong(2));
+                    feed.updatedCount = c.getInt(3);
+                    feed.lastVisited = new Date(c.getLong(4));
 
                     Log.d(TAG, "lastVisited = " + c.getLong(4));
                 }

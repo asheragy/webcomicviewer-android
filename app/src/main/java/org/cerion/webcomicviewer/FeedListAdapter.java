@@ -8,21 +8,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.cerion.webcomicviewer.comics.Comic;
+import org.cerion.webcomicviewer.data.Feed;
+import org.cerion.webcomicviewer.data.Feeds;
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.ViewHolder> {
+public class FeedListAdapter extends RecyclerView.Adapter<FeedListAdapter.ViewHolder> {
 
-    private static final String TAG = ComicListAdapter.class.getSimpleName();
-    private final List<Comic> mData;
+    private static final String TAG = FeedListAdapter.class.getSimpleName();
+    private final List<Feed> mData;
     private static final DateFormat mFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.US);
 
-    public ComicListAdapter(List<Comic> data) {
-        mData = data;
+    public FeedListAdapter() {
+        mData = Feeds.LIST;
     }
 
     @Override
@@ -34,15 +35,15 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
-        Comic comic = mData.get(position);
-        holder.mId.setText(comic.title == null ? "" : comic.title);
-        holder.mContent.setText(comic.getFeedUrl());
-        holder.mUpdated.setText( formatDate(comic.getLastUpdated()) );
+        Feed feed = mData.get(position);
+        holder.id.setText(feed.title == null ? "" : feed.title);
+        holder.content.setText(feed.getRootUrl() == null ? "" : feed.getRootUrl());
+        holder.updated.setText( formatDate(feed.lastUpdated) );
 
-        if(comic.getUpdatedCount() > 0)
-            holder.mCount.setText(comic.getUpdatedCount() + " updates");
+        if(feed.updatedCount > 0)
+            holder.count.setText(feed.updatedCount + " updates");
         else
-            holder.mCount.setText("");
+            holder.count.setText("");
     }
 
     private String formatDate(Date date) {
@@ -61,30 +62,30 @@ public class ComicListAdapter extends RecyclerView.Adapter<ComicListAdapter.View
 
 
     protected class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        final TextView mId;
-        final TextView mContent;
-        final TextView mUpdated;
-        final TextView mCount;
+        final TextView id;
+        final TextView content;
+        final TextView updated;
+        final TextView count;
 
         public ViewHolder(View v) {
             super(v);
-            mId =  (TextView) v.findViewById(R.id.id);
-            mContent = (TextView) v.findViewById(R.id.content);
-            mUpdated = (TextView) v.findViewById(R.id.updated);
-            mCount = (TextView) v.findViewById(R.id.update_count);
+            id =  (TextView) v.findViewById(R.id.id);
+            content = (TextView) v.findViewById(R.id.content);
+            updated = (TextView) v.findViewById(R.id.updated);
+            count = (TextView) v.findViewById(R.id.update_count);
 
             v.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            Comic comic = mData.get(getLayoutPosition());
+            Feed feed = mData.get(getLayoutPosition());
 
-            Log.d(TAG, "open " + comic.title);
-            comic.setVisited(v.getContext());
+            Log.d(TAG, "open " + feed.title);
+            feed.setVisited(v.getContext());
             notifyItemChanged(getLayoutPosition());
 
-            comic.openWebView(v.getContext());
+            feed.openWebView(v.getContext());
             //Intent intent = new Intent(v.getContext(),ComicViewActivity.class);
             //intent.putExtra(ComicViewActivity.EXTRA_COMIC_NAME, mData.get(pos).getName());
             //v.getContext().startActivity(intent);

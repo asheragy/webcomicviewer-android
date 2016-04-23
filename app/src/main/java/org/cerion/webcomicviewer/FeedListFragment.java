@@ -15,16 +15,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.cerion.webcomicviewer.comics.Feeds;
+import org.cerion.webcomicviewer.data.Feeds;
 
 import java.util.Date;
 
 
-public class ComicListFragment extends Fragment {
+public class FeedListFragment extends Fragment {
 
-    private static final String TAG = ComicListFragment.class.getSimpleName();
+    private static final String TAG = FeedListFragment.class.getSimpleName();
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private ComicListAdapter mAdapter;
+    private FeedListAdapter mAdapter;
     private static final String PREF_LAST_UPDATED = "lastUpdated";
     private static SharedPreferences mPrefs;
 
@@ -32,11 +32,11 @@ public class ComicListFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ComicListFragment() {
+    public FeedListFragment() {
     }
 
-    public static ComicListFragment newInstance() {
-        return new ComicListFragment();
+    public static FeedListFragment newInstance() {
+        return new FeedListFragment();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class ComicListFragment extends Fragment {
         //Set recycler view
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.list);
         recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        mAdapter = new ComicListAdapter(Feeds.LIST);
+        mAdapter = new FeedListAdapter();
         recyclerView.setAdapter(mAdapter);
 
         //Set swipe refresh
