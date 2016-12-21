@@ -75,7 +75,7 @@ public class Database extends SQLiteOpenHelper {
 
         values.put(_FEED_URL, feed.getFeedUrl());
         values.put(_TITLE, feed.title);
-        values.put(_UPDATED, feed.lastUpdated.getTime());
+        values.put(_UPDATED, (feed.lastUpdated == null ? 0 : feed.lastUpdated.getTime()) );
         values.put(_COUNT, feed.updatedCount);
         values.put(_URL, feed.url);
         values.put(_VISITED, (feed.lastVisited == null ? 0 : feed.lastVisited.getTime()) );
